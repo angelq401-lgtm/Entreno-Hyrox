@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="description" content="Entrena las estaciones de Hyrox a tu nivel, registra tus tiempos y sigue tu progreso.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entreno Hyrox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Plan: pista de atletismo + cronómetro. Tartán rojo como acento, verde azulado como segunda serie.
+   Layout: cabecera con pestañas, una columna de tarjetas operativas, max 1040px. */
+:root{
+  --bg:#f1f2ef; --surface:#ffffff; --surface2:#e8eae6; --ink:#16191e; --muted:#5b636d; --line:#d5d9d3;
+  --accent:#d9442b; --accent-ink:#ffffff; --teal:#1d6f79; --good:#2b7a3d; --warn:#b26a00; --bad:#b3261e;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111316; --surface:#1a1d21; --surface2:#23272c; --ink:#eceef0; --muted:#9aa3ad; --line:#30353b;
+  --accent:#ff6a4f; --accent-ink:#1a0d0a; --teal:#55b8c2; --good:#62c27a; --warn:#e7a33c; --bad:#ff7a70; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#111316; --surface:#1a1d21; --surface2:#23272c; --ink:#eceef0; --muted:#9aa3ad; --line:#30353b;
+  --accent:#ff6a4f; --accent-ink:#1a0d0a; --teal:#55b8c2; --good:#62c27a; --warn:#e7a33c; --bad:#ff7a70; color-scheme:dark;}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.sec>*,.card,.tile{min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 48px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top{max-width:1040px;margin:0 auto;padding:12px 16px 0;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand{font:700 26px/1 var(--display);letter-spacing:.02em;text-transform:uppercase}
+.brand span{color:var(--accent)}
+.status{font-size:12.5px;color:var(--muted);margin-left:auto}
+nav{max-width:1040px;margin:0 auto;padding:8px 16px 0;display:flex;gap:4px;overflow-x:auto}
+nav a{font:600 16px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-decoration:none;padding:10px 12px;border-bottom:3px solid transparent;white-space:nowrap}
+nav a[aria-current="page"]{color:var(--ink);border-color:var(--accent)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-transform:uppercase;letter-spacing:.02em;text-wrap:balance;margin:0}
+h1{font-size:30px;font-weight:700}
+h2{font-size:22px;font-weight:700}
+h3{font-size:18px;font-weight:600}
+.sec{display:grid;gap:16px;margin-top:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card > * + *{margin-top:10px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+label{display:grid;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:70px;resize:vertical}
+input.t{font:600 18px/1 var(--display);letter-spacing:.03em;font-variant-numeric:tabular-nums;text-align:center}
+button{font:600 15px/1 var(--display);text-transform:uppercase;letter-spacing:.05em;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:10px 14px;cursor:pointer}
+button:hover{filter:brightness(.97)}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.ghost{background:transparent}
+button.sm{padding:7px 10px;font-size:13px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.pill{display:inline-block;font:600 12px/1 var(--body);padding:5px 8px;border-radius:99px;background:var(--surface2);color:var(--muted)}
+.pill.acc{background:var(--accent);color:var(--accent-ink)}
+.pill.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums;font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.tile .v{font:700 34px/1.05 var(--display);font-variant-numeric:tabular-nums}
+.tile .l{font-size:12.5px;color:var(--muted)}
+.banner{border-left:4px solid var(--teal);background:var(--surface);padding:10px 14px;border-radius:6px;font-size:14px}
+.banner.acc{border-color:var(--accent)}
+/* Plan */
+.phase{display:flex;gap:4px;margin-top:6px}
+.phase i{flex:1;height:8px;border-radius:2px;background:var(--surface2)}
+.phase i.on{background:var(--accent)} .phase i.past{background:color-mix(in srgb,var(--accent) 35%,var(--surface2))}
+.sess{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px;display:grid;gap:8px}
+.sess.done{border-left:4px solid var(--good)}
+.sess .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.sess .day{font:700 15px/1 var(--display);color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.sess ul{margin:0;padding-left:18px}
+.sess li{margin:3px 0}
+.sess li b{font-weight:600}
+/* Splits */
+.splits{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.split{background:var(--surface2);border-radius:8px;padding:8px;display:grid;gap:4px}
+.split.run{background:color-mix(in srgb,var(--teal) 12%,var(--surface))}
+.split span{font-size:12px;color:var(--muted);font-weight:500}
+/* Crono */
+.clock{font:700 clamp(56px,14vw,110px)/1 var(--display);font-variant-numeric:tabular-nums;text-align:center;letter-spacing:.02em}
+.seg-now{text-align:center;font:600 22px/1.2 var(--display);text-transform:uppercase}
+.seg-now small{display:block;font:500 14px var(--body);color:var(--muted);text-transform:none}
+.laps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.lap{display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--surface2);font-size:14px}
+.lap.cur{outline:2px solid var(--accent)}
+.lap b{font-family:var(--display);font-variant-numeric:tabular-nums;font-size:16px}
+.big{font-size:22px;padding:18px 26px}
+/* Report */
+.cmp{display:grid;gap:10px}
+.cmp .r{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center}
+.bar{position:relative;height:22px;background:var(--surface2);border-radius:4px}
+.bar .f{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}
+.bar .f.ok{background:var(--good)}
+.bar .m{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.bar .m2{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--teal)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:420px}
+.chart text{fill:var(--muted);font:12px var(--body)}
+.recs{display:grid;gap:12px;counter-reset:r}
+.rec{display:grid;grid-template-columns:34px 1fr;gap:10px}
+.rec::before{counter-increment:r;content:counter(r);font:700 22px/34px var(--display);text-align:center;background:var(--accent);color:var(--accent-ink);border-radius:8px;height:34px}
+.rec p{margin:2px 0}
+.hist{display:grid;gap:6px}
+.hrow{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--surface2)}
+.hrow .tt{font:600 16px var(--display);font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+table.w{border-collapse:collapse;width:100%;font-size:14px}
+table.w td,table.w th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.w th{font-weight:600;color:var(--muted);font-size:12.5px}
+.tblwrap{overflow-x:auto}
+footer{max-width:1040px;margin:0 auto;padding:0 16px 32px;font-size:12px;color:var(--muted)}
+@media (max-width:560px){.cmp .r{grid-template-columns:96px 1fr 56px;font-size:13px}.hrow{grid-template-columns:80px 1fr}.hrow .act{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><div class="brand">Entreno <span>Hyrox</span></div><div class="status" id="status"></div></div>
+  <nav id="nav" aria-label="Secciones" hidden>
+    <a href="#entreno">Entreno</a><a href="#crono">Cronómetro</a><a href="#registrar">Anotar</a><a href="#progreso">Progreso</a><a href="#perfil">Perfil</a>
+  </nav>
+</header>
+<main class="wrap" id="app"><div class="sec"><div class="card muted">Cargando…</div></div></main>
+<footer>Herramienta personal de entrenamiento, sin afiliación con HYROX. Tiempos de referencia y calorías son estimaciones orientativas.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.97.0"></script>
+<script src="config.js"></script>
+<script>
+/* ================= Referencias ================= */
+const ST={
+ ski:{n:'SkiErg',u:'m',race:1000,per:500,pl:'/500 m',amt:[400,600,800,1000],met:10},
+ push:{n:'Sled Push',u:'m',race:50,per:25,pl:'/25 m',amt:[25,25,50,50],w:'push',met:9},
+ pull:{n:'Sled Pull',u:'m',race:50,per:25,pl:'/25 m',amt:[25,25,50,50],w:'pull',met:9},
+ bbj:{n:'Burpee Broad Jumps',u:'m',race:80,per:20,pl:'/20 m',amt:[30,40,60,80],met:10},
+ row:{n:'Remo',u:'m',race:1000,per:500,pl:'/500 m',amt:[400,600,800,1000],met:9.5},
+ farmers:{n:'Farmers Carry',u:'m',race:200,per:50,pl:'/50 m',amt:[100,150,200,200],w:'farm',met:6},
+ lunges:{n:'Sandbag Lunges',u:'m',race:100,per:25,pl:'/25 m',amt:[40,50,75,100],w:'bag',met:8},
+ wb:{n:'Wall Balls',u:'reps',race:100,per:10,pl:'/10 reps',amt:[40,60,80,100],w:'wb',met:9},
+ run:{n:'Carrera',u:'m',race:1000,per:1000,pl:'/km',amt:[400,600,800,1000]}};
+const ORDER=['ski','push','pull','bbj','row','farmers','lunges','wb'];
+const LEVELS=[{k:'principiante',n:'Principiante',st:4},{k:'intermedio',n:'Intermedio',st:5},{k:'avanzado',n:'Avanzado',st:6},{k:'elite',n:'Élite',st:8}];
+const WEIGHTS={openF:{push:102,pull:78,farm:16,bag:10,wb:4},openM:{push:152,pull:103,farm:24,bag:20,wb:6},proF:{push:152,pull:103,farm:24,bag:20,wb:6},proM:{push:202,pull:153,farm:32,bag:30,wb:9}};
+const PCT=[0.6,0.75,0.9,1.0];
+const BENCH={
+ principiante:{ski:315,push:300,pull:390,bbj:390,row:330,farmers:150,lunges:390,wb:540,run:360},
+ intermedio:{ski:285,push:240,pull:300,bbj:300,row:300,farmers:120,lunges:300,wb:420,run:315},
+ avanzado:{ski:255,push:180,pull:240,bbj:225,row:270,farmers:100,lunges:240,wb:315,run:270},
+ elite:{ski:235,push:135,pull:195,bbj:170,row:245,farmers:75,lunges:180,wb:240,run:230}};
+// MET al correr según velocidad (km/h), aproximado al Compendio de Actividades Físicas
+const RUN_MET=[[6.4,6],[8,8.3],[9.7,9.8],[10.8,10.5],[11.3,11],[12.1,11.8],[12.9,12.3],[13.8,12.8],[14.5,13.8],[16.1,14.5],[17.7,16],[19.3,19]];
+const FOCUS={equilibrado:'Equilibrado',fuerza:'Fuerza',motor:'Motor',debiles:'Mis puntos débiles'};
+const FOCUS_D={equilibrado:'Rota las estaciones que menos has hecho últimamente.',fuerza:'Trineos, lunges y farmers primero.',motor:'Ergómetros, burpees y wall balls primero.',debiles:'Elige las estaciones donde peor estás frente a tu nivel.'};
+const TIPS={
+ ski:{how:'Tira con la cadera y el peso del cuerpo, no solo con los brazos. 26–30 paladas por minuto.',work:'6 × 250 m a tu ritmo objetivo con 60 s de descanso, dos veces por semana.'},
+ push:{how:'Brazos casi extendidos, cuerpo a unos 45°, pasos cortos y continuos.',work:'Sentadilla y zancada pesada 4 × 6, y 6 × 12,5 m de empuje con más peso del habitual.'},
+ pull:{how:'Pies firmes, tira mano sobre mano con espalda y cadera, cuerda recogida a un lado.',work:'Remo con barra 4 × 8, jalón o dominadas 4 × 8 y arrastres cortos pesados.'},
+ bbj:{how:'Ritmo constante: salto moderado de 1,2–1,5 m y una respiración en cada fase de suelo.',work:'EMOM 10 min con 8–10 burpee broad jumps.'},
+ row:{how:'Piernas, cuerpo, brazos; al volver, al revés. 24–28 paladas por minuto.',work:'4 × 500 m fuertes con 90 s de descanso.'},
+ farmers:{how:'El límite suele ser el agarre: hombros atrás, pasos cortos y rápidos.',work:'4 × 50 m con un 25 % más de peso y 3 colgadas de barra al máximo.'},
+ lunges:{how:'Saco alto sobre los hombros, rodilla al suelo sin golpear, pausas cortas planificadas.',work:'4 × 20 m pesados y zancadas justo después de correr 400 m.'},
+ wb:{how:'Series planificadas (20-15-15-10) con 3–5 respiraciones entre ellas. Empuja con las piernas.',work:'50–75 wall balls en series de 15–25 al final de tres entrenos por semana.'},
+ run:{how:'Corre los primeros tramos algo más despacio para mantener el ritmo en los últimos.',work:'Entrenos con carrera entre estaciones intentando que cada tramo salga al mismo ritmo.'}};
+
+/* ================= Utilidades ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const DAY=864e5;
+function todayStr(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function daysAgoStr(n){const d=new Date(Date.now()-n*DAY);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function dParse(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+const dFmt=s=>dParse(s).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+const ago=s=>Math.round((dParse(todayStr())-dParse(s))/DAY);
+function fmt(sec){if(sec==null||isNaN(sec))return '—';sec=Math.round(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+ return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${m}:${String(s).padStart(2,'0')}`}
+function parseT(str){str=String(str||'').trim().replace(',','.');if(!str)return null;
+ if(!str.includes(':')){const n=parseFloat(str);return isNaN(n)?null:Math.round(n*60)}
+ const p=str.split(':').map(Number);if(p.some(isNaN))return null;return p.length===3?p[0]*3600+p[1]*60+p[2]:p[0]*60+p[1]}
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+const lvlIdx=k=>Math.max(0,LEVELS.findIndex(l=>l.k===k));
+const amtTxt=(k,a)=>ST[k].u==='reps'?a+' reps':a+' m';
+const kcal=n=>n==null?'—':Math.round(n).toLocaleString('es-ES');
+function setStatus(t,bad){const el=$('#status');el.textContent=t||'';el.style.color=bad?'var(--bad)':''}
+
+/* ================= Perfil, nivel y calorías ================= */
+const weights=p=>WEIGHTS[(p.scale||'open')+(p.sex||'M')];
+function ageOf(p){if(!p.birthdate)return null;const b=dParse(p.birthdate),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
+function bmr(p){const w=+p.weight_kg,h=+p.height_cm,a=ageOf(p);if(!w||!h||a==null)return null;return 10*w+6.25*h-5*a+(p.sex==='F'?-161:5)} // Mifflin-St Jeor
+const bmi=p=>p.weight_kg&&p.height_cm?p.weight_kg/((p.height_cm/100)**2):null;
+const profileComplete=p=>!!(p&&p.weight_kg&&p.height_cm&&p.birthdate&&p.five_k_sec);
+function runMet(secPerKm){const v=3600/secPerKm;const t=RUN_MET;if(v<=t[0][0])return t[0][1];for(let i=1;i<t.length;i++)if(v<=t[i][0]){const [a,b]=[t[i-1],t[i]];return a[1]+(b[1]-a[1])*(v-a[0])/(b[0]-a[0])}return t[t.length-1][1]}
+// kcal ≈ MET × (metabolismo basal por minuto) × minutos. Usa peso, altura, edad y sexo.
+function segKcal(g,p,timeSec){const B=bmr(p)||(p.weight_kg||70)*24;const t=timeSec||refTime(g.k,g.amount,level(p),p);
+ const met=g.k==='run'?runMet(t/g.amount*1000):ST[g.k].met;return met*B/1440*t/60}
+function workoutKcal(segs,p,useEst){return segs.reduce((a,g)=>(g.time||useEst)?a+segKcal(g,p,g.time):a,0)}
+function autoLevel(p){const k=(p.five_k_sec||1800)/60-(p.sex==='F'?2.5:0);let l=k>28?0:k>23?1:k>19.5?2:3;
+ if(p.strength==='0')l=Math.min(l,1);else if(p.strength==='1')l=Math.min(l,2);if(p.hyrox_exp==='0')l=Math.min(l,2);return l}
+const level=p=>p.level_manual||LEVELS[autoLevel(p)].k;
+function refTime(k,amount,lvl,p){let t=BENCH[lvl][k]/ST[k].race*amount;if(p.sex==='F')t*=1.07;if(p.scale==='pro'&&ST[k].w)t*=1.08;return t}
+function loadFor(k,p,L){const w=ST[k].w;if(!w)return null;const W=weights(p)[w];
+ if(w==='farm')return '2 × '+Math.max(4,Math.round(W*PCT[L]/2)*2)+' kg';if(w==='wb')return (L<1?Math.max(3,W-2):W)+' kg';return Math.round(W*PCT[L]/5)*5+' kg'}
+
+/* ================= Estado ================= */
+const S={sb:null,user:null,profile:null,sessions:[],demo:null,form:null,swap:null,view:null};
+const P=()=>S.demo?S.demo.profile:S.profile;
+const SESS=()=>S.demo?S.demo.sessions:S.sessions;
+const cur=()=>S.demo?S.demo.current:S.profile?.current_workout;
+async function setCur(w){if(S.demo){S.demo.current=w;return}S.profile.current_workout=w;await saveProfileFields({current_workout:w},true)}
+
+/* ================= Supabase ================= */
+async function saveProfileFields(f,quiet){if(S.demo){Object.assign(S.demo.profile,f);return true}
+ if(!quiet)setStatus('Guardando…');const {error}=await S.sb.from('profiles').update({...f,updated_at:new Date().toISOString()}).eq('id',S.user.id);
+ if(error){setStatus('No se pudo guardar: '+error.message,true);return false}Object.assign(S.profile,f);if(!quiet)setStatus('Guardado');return true}
+async function loadProfile(){const {data,error}=await S.sb.from('profiles').select('*').eq('id',S.user.id).maybeSingle();if(error)throw error;
+ if(!data){const ins={id:S.user.id,email:S.user.email,name:S.user.user_metadata?.name||''};const r=await S.sb.from('profiles').insert(ins).select().single();if(r.error)throw r.error;return r.data}
+ return data}
+async function loadSessions(){const me=S.user.id;
+ const {data,error}=await S.sb.from('workout_participants').select('calories,weight_kg,workout:workouts(*)').eq('user_id',me);if(error)throw error;
+ const ws=data.filter(r=>r.workout).map(r=>({...r.workout,calories:r.calories,mine:r.workout.owner_id===me,created:Date.parse(r.workout.created_at)}));
+ const ids=ws.map(w=>w.id);let parts=[];
+ if(ids.length){const q=await S.sb.from('workout_participants').select('workout_id,user_id').in('workout_id',ids);if(q.error)throw q.error;parts=q.data}
+ const others=[...new Set(parts.map(x=>x.user_id).concat(ws.map(w=>w.owner_id)).filter(id=>id!==me))];let names={};
+ if(others.length){const r=await S.sb.rpc('get_names',{ids:others});if(!r.error)r.data.forEach(x=>names[x.id]=x.name||'Sin nombre')}
+ ws.forEach(w=>{w.partners=parts.filter(x=>x.workout_id===w.id&&x.user_id!==me).map(x=>({id:x.user_id,name:names[x.user_id]||'Compañero'}));w.ownerName=w.mine?null:(names[w.owner_id]||'Compañero')});
+ S.sessions=ws;
+ // calorías pendientes: entrenos en los que me añadieron, calculadas con mis datos
+ const p=S.profile;if(profileComplete(p))for(const w of ws.filter(w=>w.calories==null)){const c=Math.round(workoutKcal(w.segs||[],p));
+  const r=await S.sb.from('workout_participants').update({calories:c,weight_kg:p.weight_kg}).eq('workout_id',w.id).eq('user_id',me);if(!r.error)w.calories=c}}
+async function saveWorkout(f,partners){const p=P();const me=S.demo?'demo':S.user.id;const c=Math.round(workoutKcal(f.segs,p));
+ const row={id:f.id||uuid(),owner_id:me,date:f.date,title:f.title,focus:f.focus,level:f.level,segs:f.segs,rpe:f.rpe,notes:f.notes};
+ if(S.demo){const s={...row,calories:c,mine:true,created:Date.now(),partners:partners.map(x=>({...x}))};const a=SESS();const i=a.findIndex(x=>x.id===s.id);if(i>=0)a[i]=s;else a.push(s);return true}
+ setStatus('Guardando…');
+ if(f.id){const r=await S.sb.from('workouts').update(row).eq('id',f.id);if(r.error){setStatus('No se pudo guardar: '+r.error.message,true);return false}
+  await S.sb.from('workout_participants').update({calories:c,weight_kg:p.weight_kg}).eq('workout_id',f.id).eq('user_id',me);
+  const old=(SESS().find(x=>x.id===f.id)?.partners||[]).map(x=>x.id);const now=partners.map(x=>x.id);
+  const add=now.filter(id=>!old.includes(id)),del=old.filter(id=>!now.includes(id));
+  if(add.length){const r2=await S.sb.from('workout_participants').insert(add.map(id=>({workout_id:f.id,user_id:id})));if(r2.error)setStatus('No se pudo añadir al compañero: '+r2.error.message,true)}
+  if(del.length)await S.sb.from('workout_participants').delete().eq('workout_id',f.id).in('user_id',del)}
+ else{const r=await S.sb.from('workouts').insert(row);if(r.error){setStatus('No se pudo guardar: '+r.error.message,true);return false}
+  const r2=await S.sb.from('workout_participants').insert([{workout_id:row.id,user_id:me,calories:c,weight_kg:p.weight_kg},...partners.map(x=>({workout_id:row.id,user_id:x.id}))]);
+  if(r2.error){setStatus('Entreno guardado, pero falló al añadir participantes: '+r2.error.message,true)}}
+ await loadSessions();setStatus('Guardado');return true}
+async function deleteWorkout(id){if(S.demo){S.demo.sessions=S.demo.sessions.filter(x=>x.id!==id);return}
+ const w=SESS().find(x=>x.id===id);const r=w.mine?await S.sb.from('workouts').delete().eq('id',id):await S.sb.from('workout_participants').delete().eq('workout_id',id).eq('user_id',S.user.id);
+ if(r.error){setStatus('No se pudo borrar: '+r.error.message,true);return}await loadSessions();setStatus('Hecho')}
+
+/* ================= Generador ================= */
+function stationStats(){const p=P();const lv=level(p);const o={};ORDER.concat('run').forEach(k=>o[k]={pts:[],last:null});
+ [...SESS()].sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>(s.segs||[]).forEach(g=>{if(!g.time||!g.amount||!o[g.k])return;
+  o[g.k].pts.push({date:s.date,rate:g.time/g.amount*ST[g.k].per,idx:refTime(g.k,g.amount,lv,p)/g.time*100});o[g.k].last=s.date}));
+ for(const k in o){const r=o[k].pts.slice(-3);o[k].idx=r.length?r.reduce((a,b)=>a+b.idx,0)/r.length:null}return o}
+function buildSegs(st,p,L,run,rounds){const segs=[];for(let r=0;r<rounds;r++)st.forEach(k=>{if(run)segs.push({k:'run',amount:ST.run.amt[L],r});segs.push({k,amount:ST[k].amt[L],load:loadFor(k,p,L),r})});return segs}
+function finishW(w,p){const L=lvlIdx(w.level);w.est=w.segs.reduce((a,g)=>a+refTime(g.k,g.amount,w.level,p),0)+(w.run?0:w.segs.length*60)+(w.rounds-1)*120;
+ w.count=w.stations.length;w.kcal=Math.round(workoutKcal(w.segs,p,true));return w}
+function generate(p,opt){const L=lvlIdx(level(p));const n=clamp(opt.count||LEVELS[L].st,2,8);const stats=stationStats();let pri;
+ if(opt.focus==='fuerza')pri=['push','pull','lunges','farmers','wb','bbj','row','ski'];
+ else if(opt.focus==='motor')pri=['ski','row','bbj','wb','farmers','lunges','push','pull'];
+ else if(opt.focus==='debiles')pri=[...ORDER].sort((a,b)=>(stats[a].idx??97)-(stats[b].idx??97));
+ else pri=[...ORDER].sort((a,b)=>(stats[a].last||'0000').localeCompare(stats[b].last||'0000')||Math.random()-.5);
+ const stations=ORDER.filter(k=>pri.slice(0,n).includes(k));const rounds=clamp(opt.rounds||1,1,3);
+ return finishW({id:uuid(),level:LEVELS[L].k,focus:opt.focus,run:opt.run,rounds,stations,segs:buildSegs(stations,p,L,opt.run,rounds)},p)}
+function swapStation(w,from,to,p){const i=w.stations.indexOf(from);if(i<0)return w;if(to){w.stations[i]=to}else w.stations.splice(i,1);
+ // conserva el orden en que estaban, sustituyendo en el sitio
+ w.segs=buildSegs(w.stations,p,lvlIdx(w.level),w.run,w.rounds);return finishW(w,p)}
+
+/* ================= Análisis ================= */
+function analysis(){const p=P();const L=lvlIdx(level(p));const lv=LEVELS[L].k;const stats=stationStats();
+ const ss=[...SESS()].sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
+ const pts=ss.map(s=>{const g=(s.segs||[]).filter(x=>x.time&&x.amount);if(!g.length)return null;return {date:s.date,idx:g.reduce((a,x)=>a+refTime(x.k,x.amount,lv,p)/x.time*100,0)/g.length}}).filter(Boolean);
+ const avg=a=>a.length?a.reduce((x,y)=>x+y.idx,0)/a.length:null;
+ const recent=ss.filter(s=>ago(s.date)<28);
+ const rpe=ss.filter(s=>s.rpe&&ago(s.date)<14).map(s=>s.rpe);const rpeAvg=rpe.length?rpe.reduce((a,b)=>a+b,0)/rpe.length:null;
+ let fade=null;const wr=ss.filter(s=>(s.segs||[]).filter(g=>g.k==='run'&&g.time).length>=3);
+ if(wr.length){const s=wr[wr.length-1];const r=s.segs.filter(g=>g.k==='run'&&g.time).map(g=>g.time/g.amount*1000);const h=Math.floor(r.length/2);const m=x=>x.reduce((u,v)=>u+v,0)/x.length;fade={pct:(m(r.slice(-h))-m(r.slice(0,h)))/m(r.slice(0,h)),runs:r,date:s.date}}
+ // calorías por semana (8 semanas, lunes a domingo)
+ const key=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+ const mon=d=>{const x=dParse(d);x.setDate(x.getDate()-(x.getDay()+6)%7);return key(x)};
+ const weeks=Array.from({length:8},(_,i)=>{const x=dParse(mon(todayStr()));x.setDate(x.getDate()-(7-i)*7);return {start:key(x),kcal:0,n:0}});
+ ss.forEach(s=>{const wk=weeks.find(w=>w.start===mon(s.date));if(wk){wk.kcal+=s.calories||0;wk.n++}});
+ const k28=recent.reduce((a,s)=>a+(s.calories||0),0);const withK=ss.filter(s=>s.calories);
+ return {p,L,lv,stats,pts,recent,rpeAvg,fade,nowIdx:avg(pts.slice(-3)),startIdx:avg(pts.slice(0,3)),ss,weeks,k28,kAvg:withK.length?withK.reduce((a,s)=>a+s.calories,0)/withK.length:null,kWeek:weeks[7].kcal}}
+
+/* ================= Vistas: acceso ================= */
+const app=$('#app');
+function vSetup(){app.innerHTML=`<div class="sec"><div class="card"><h1>Falta configurar la web</h1><p>Abre <b>config.js</b> y pega la URL y la clave pública de tu proyecto de Supabase. Los pasos están en la guía (GUIA.md).</p><button data-act="demo">Ver un ejemplo mientras tanto</button></div></div>`}
+function vAuth(mode,msg){$('#nav').hidden=true;mode=mode||'login';
+ app.innerHTML=`<div class="sec" style="max-width:440px;margin:28px auto 0">
+ <div class="card"><h1>${mode==='signup'?'Crear cuenta':mode==='forgot'?'Recuperar contraseña':mode==='newpass'?'Nueva contraseña':'Entrar'}</h1>
+  <p class="muted small">${mode==='signup'?'Tus entrenos, tu perfil y tus informes quedan guardados en tu cuenta y los ves desde cualquier dispositivo.':mode==='forgot'?'Te enviaremos un enlace para crear una contraseña nueva.':mode==='newpass'?'Escribe tu nueva contraseña.':'Entrena las estaciones de Hyrox a tu nivel y sigue tu progreso.'}</p>
+  <form id="af" class="sec" style="margin-top:8px;gap:10px">
+   ${mode==='signup'?'<label>Nombre<input id="a-name" autocomplete="name" required></label>':''}
+   ${mode!=='newpass'?'<label>Email<input id="a-email" type="email" autocomplete="email" required></label>':''}
+   ${mode==='login'||mode==='signup'||mode==='newpass'?`<label>Contraseña<input id="a-pass" type="password" minlength="8" autocomplete="${mode==='login'?'current-password':'new-password'}" required></label>`:''}
+   <button class="pri" type="submit">${mode==='signup'?'Crear cuenta':mode==='forgot'?'Enviar enlace':mode==='newpass'?'Guardar contraseña':'Entrar'}</button>
+   <div class="small" id="a-msg" style="color:var(--${msg&&msg.bad?'bad':'good'})">${esc(msg?.t||'')}</div>
+  </form>
+  <div class="row small">${mode==='login'?'<a href="#" data-act="am" data-m="signup">Crear cuenta nueva</a><a href="#" data-act="am" data-m="forgot">He olvidado la contraseña</a><a href="#" data-act="demo">Ver un ejemplo sin cuenta</a>':mode==='newpass'?'':'<a href="#" data-act="am" data-m="login">Ya tengo cuenta: entrar</a>'}</div>
+ </div></div>`;
+ $('#af').addEventListener('submit',async e=>{e.preventDefault();const m=$('#a-msg');m.style.color='var(--muted)';m.textContent='Un momento…';const email=$('#a-email')?.value.trim();const pass=$('#a-pass')?.value;
+  const here=location.origin+location.pathname;let r;
+  if(mode==='login')r=await S.sb.auth.signInWithPassword({email,password:pass});
+  else if(mode==='signup'){r=await S.sb.auth.signUp({email,password:pass,options:{data:{name:$('#a-name').value.trim()},emailRedirectTo:here}});
+   if(!r.error&&!r.data.session)return vAuth('login',{t:'Cuenta creada. Revisa tu email y pulsa el enlace de confirmación; después entra aquí.'})}
+  else if(mode==='forgot'){r=await S.sb.auth.resetPasswordForEmail(email,{redirectTo:here});if(!r.error)return vAuth('login',{t:'Si ese email tiene cuenta, te hemos enviado un enlace.'})}
+  else if(mode==='newpass'){r=await S.sb.auth.updateUser({password:pass});if(!r.error){S.recovery=false;return start()}}
+  if(r.error){m.style.color='var(--bad)';m.textContent=authError(r.error)}})}
+function authError(e){const t=e.message||'';if(/Invalid login/i.test(t))return 'Email o contraseña incorrectos.';if(/not confirmed/i.test(t))return 'Confirma primero tu email con el enlace que te enviamos.';if(/already registered/i.test(t))return 'Ese email ya tiene cuenta. Entra o recupera la contraseña.';if(/at least/i.test(t))return 'La contraseña debe tener al menos 8 caracteres.';if(/rate limit/i.test(t))return 'Demasiados intentos. Espera unos minutos.';return t}
+
+/* ================= Router ================= */
+function route(){if(!P())return;$('#nav').hidden=false;const h=(location.hash||'').slice(1);let v=['entreno','crono','registrar','progreso','perfil'].includes(h)?h:'entreno';
+ if(!profileComplete(P()))v='perfil';
+ document.querySelectorAll('#nav a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
+ ({entreno:vEntreno,crono:vCrono,registrar:vRegistrar,progreso:vProgreso,perfil:vPerfil})[v]()}
+const demoBanner=()=>S.demo?`<div class="banner acc row"><span>Estás viendo datos de ejemplo. Nada se guarda.</span><button class="sm" data-act="exitdemo">${S.user?'Volver a mis datos':'Salir del ejemplo'}</button></div>`:'';
+
+/* ---- Perfil ---- */
+function vPerfil(){const p=P();const first=!profileComplete(p);const a=ageOf(p),B=bmr(p),I=bmi(p);
+ app.innerHTML=`<div class="sec">${demoBanner()}
+ ${first?`<div class="card"><h1>Completa tu perfil</h1><p class="muted">Con tu peso, altura y edad calculamos las calorías de cada entreno. Con tu 5 km y tu experiencia calculamos tu nivel: número de estaciones, distancias y pesos.</p></div>`:''}
+ <form class="card" id="pf"><h2>Mis datos</h2>
+  <div class="grid2">
+   <label>Nombre<input id="f-name" value="${esc(p.name)}" required></label>
+   <label>Sexo<select id="f-sex"><option value="M">Hombre</option><option value="F">Mujer</option></select></label>
+   <label>Fecha de nacimiento<input id="f-birth" type="date" value="${esc(p.birthdate||'')}" max="${todayStr()}" required></label>
+   <label>Altura (cm)<input id="f-h" type="number" min="100" max="250" value="${p.height_cm??''}" required></label>
+   <label>Peso (kg)<input id="f-w" inputmode="decimal" value="${p.weight_kg??''}" required></label>
+   <label>Tiempo actual en 5 km<input id="f-5k" class="t" value="${p.five_k_sec?fmt(p.five_k_sec):''}" placeholder="25:00" required></label>
+   <label>Escala de pesos<select id="f-scale"><option value="open">Estándar (Open)</option><option value="pro">Pesada (Pro)</option></select></label>
+   <label>Experiencia con fuerza<select id="f-str"><option value="0">Menos de 1 año</option><option value="1">1–3 años</option><option value="3">Más de 3 años</option></select></label>
+   <label>¿Has entrenado estaciones tipo Hyrox?<select id="f-exp"><option value="0">Nunca o casi nunca</option><option value="1">Algunas veces</option><option value="2">Con regularidad</option></select></label>
+   <label>Entrenos por semana que quieres hacer<select id="f-pw">${[2,3,4,5,6].map(d=>`<option ${p.per_week===d?'selected':''}>${d}</option>`).join('')}</select></label>
+  </div>
+  <div class="card" style="background:var(--surface2);border:0">
+   <div class="row"><span class="muted small">Nivel calculado:</span><span class="pill acc" id="lvl-auto"></span>
+   <label style="margin-left:auto;min-width:200px">Ajustar nivel a mano<select id="f-lvl"><option value="">Usar el calculado</option>${LEVELS.map(l=>`<option value="${l.k}" ${p.level_manual===l.k?'selected':''}>${l.n}</option>`).join('')}</select></label></div>
+   <div class="tblwrap" id="lvl-tab"></div></div>
+  <div class="row"><button class="pri" type="submit">${first?'Guardar y crear mi primer entreno':'Guardar perfil'}</button><span class="small" id="pf-msg"></span></div>
+ </form>
+ ${!first?`<div class="tiles"><div class="tile"><div class="l">Edad</div><div class="v">${a??'—'}</div></div><div class="tile"><div class="l">IMC</div><div class="v">${I?I.toFixed(1).replace('.',','):'—'}</div><div class="l">peso / altura²</div></div><div class="tile"><div class="l">Metabolismo basal</div><div class="v">${kcal(B)}</div><div class="l">kcal al día en reposo (Mifflin-St Jeor)</div></div></div>`:''}
+ <div class="card"><h2>Cuenta</h2><p class="small muted">${S.demo?'Modo ejemplo.':'Has entrado como <b>'+esc(S.user.email)+'</b>. Los informes por email llegan a esta dirección.'}</p>
+  <div class="row">${S.demo?'':'<button class="ghost" data-act="logout">Cerrar sesión</button>'}</div></div></div>`;
+ $('#f-sex').value=p.sex||'M';$('#f-scale').value=p.scale||'open';$('#f-str').value=p.strength||'1';$('#f-exp').value=p.hyrox_exp||'0';
+ const upd=()=>{const q=readProfile();const L=lvlIdx(level(q));$('#lvl-auto').textContent=LEVELS[autoLevel(q)].n;
+  $('#lvl-tab').innerHTML=`<table class="w"><tr><th>Con tu nivel (${LEVELS[L].n})</th><th></th></tr>
+   <tr><td>Estaciones por entreno</td><td><b>${LEVELS[L].st}</b> de 8</td></tr><tr><td>Carrera entre estaciones</td><td>${ST.run.amt[L]} m</td></tr>
+   <tr><td>SkiErg / Remo</td><td>${ST.ski.amt[L]} m</td></tr><tr><td>Sled Push / Pull</td><td>${ST.push.amt[L]} m · ${loadFor('push',q,L)} / ${loadFor('pull',q,L)}</td></tr>
+   <tr><td>Farmers · Lunges</td><td>${ST.farmers.amt[L]} m con ${loadFor('farmers',q,L)} · ${ST.lunges.amt[L]} m con ${loadFor('lunges',q,L)}</td></tr>
+   <tr><td>Wall Balls · Burpee Broad Jumps</td><td>${ST.wb.amt[L]} reps con ${loadFor('wb',q,L)} · ${ST.bbj.amt[L]} m</td></tr></table>`};
+ $('#pf').addEventListener('input',upd);upd();
+ $('#pf').addEventListener('submit',async e=>{e.preventDefault();const q=readProfile();const m=$('#pf-msg');
+  if(!q.five_k_sec){m.textContent='Escribe tu 5 km como m:ss, por ejemplo 25:30.';return}if(!(q.weight_kg>=30&&q.weight_kg<=250)){m.textContent='Revisa el peso (entre 30 y 250 kg).';return}
+  const f={name:q.name,sex:q.sex,birthdate:q.birthdate,height_cm:q.height_cm,weight_kg:q.weight_kg,five_k_sec:q.five_k_sec,scale:q.scale,strength:q.strength,hyrox_exp:q.hyrox_exp,per_week:q.per_week,level_manual:q.level_manual||null};
+  if(!await saveProfileFields(f))return;if(!cur())await setCur(generate(P(),OPT));location.hash='#entreno';route()})}
+function readProfile(){return {...P(),name:$('#f-name').value.trim(),sex:$('#f-sex').value,birthdate:$('#f-birth').value||null,height_cm:+$('#f-h').value||null,weight_kg:parseFloat(String($('#f-w').value).replace(',','.'))||null,
+ five_k_sec:parseT($('#f-5k').value),scale:$('#f-scale').value,strength:$('#f-str').value,hyrox_exp:$('#f-exp').value,per_week:+$('#f-pw').value,level_manual:$('#f-lvl').value}}
+
+/* ---- Entreno ---- */
+let OPT={focus:'equilibrado',run:true,rounds:1,count:null};
+async function vEntreno(){const p=P();const L=lvlIdx(level(p));let w=cur();if(!w||!w.stations){w=generate(p,OPT);await setCur(w)}
+ const defN=LEVELS[L].st;const n=OPT.count||defN;const lv=w.level;
+ app.innerHTML=`<div class="sec">${demoBanner()}
+ <div class="card"><h2>Crear entreno</h2><p class="small muted">Nivel ${LEVELS[L].n}: ${defN} estaciones por defecto. ${FOCUS_D[OPT.focus]}</p>
+  <div class="grid3">
+   <label>Enfoque<select id="o-focus">${Object.entries(FOCUS).map(([k,v])=>`<option value="${k}" ${OPT.focus===k?'selected':''}>${v}</option>`).join('')}</select></label>
+   <label>Estaciones: <b id="o-nv">${n}</b>${n!==defN?` <span class="muted">(tu nivel: ${defN})</span>`:''}<input id="o-count" type="range" min="2" max="8" value="${n}"></label>
+   <label>Rondas<select id="o-rounds">${[1,2,3].map(r=>`<option ${OPT.rounds===r?'selected':''}>${r}</option>`).join('')}</select></label>
+   <label>Carrera entre estaciones<select id="o-run"><option value="1" ${OPT.run?'selected':''}>Sí, ${ST.run.amt[L]} m</option><option value="0" ${!OPT.run?'selected':''}>No, solo estaciones</option></select></label>
+  </div><div class="row"><button class="pri" data-act="gen">Generar entreno nuevo</button></div></div>
+ <div class="card">
+  <div class="row"><div><h1>${w.count} estaciones${w.rounds>1?' × '+w.rounds+' rondas':''}</h1><div class="muted">${FOCUS[w.focus]} · nivel ${LEVELS[lvlIdx(lv)].n} · ${w.run?'con carrera':'sin carrera'} · ~${Math.round(w.est/60)} min · ~${kcal(w.kcal)} kcal</div></div>
+   <div class="row" style="margin-left:auto"><button class="pri" data-act="startw">Empezar con cronómetro</button><button data-act="manual">Anotar tiempos a mano</button></div></div>
+  <p class="small muted">Pulsa <b>Cambiar</b> en una estación para sustituirla por otra o quitarla.</p>
+  <ol class="hist" style="padding:0;list-style:none">${w.segs.map((g,i)=>{const rt=refTime(g.k,g.amount,lv,p);const first=i===0||w.segs[i-1].r!==g.r;const isSt=g.k!=='run';
+   const sw=isSt&&S.swap===g.k&&g.r===0;
+   return `${first&&w.rounds>1?`<li class="small muted" style="margin-top:6px"><b>Ronda ${g.r+1}</b>${g.r?' · descansa 2 min antes':''}</li>`:''}<li class="hrow" style="${!isSt?'background:color-mix(in srgb,var(--teal) 12%,var(--surface))':''}"><div class="num" style="font-size:20px">${amtTxt(g.k,g.amount)}</div>
+    <div><b>${ST[g.k].n}</b>${g.load?` <span class="pill">${g.load}</span>`:''}<div class="small muted">${isSt?`referencia ~${fmt(rt)}`:`a ~${fmt(rt/g.amount*1000)}/km`} · ~${kcal(segKcal(g,p))} kcal</div>
+     ${sw?`<div class="row" style="margin-top:6px"><label style="flex:1;min-width:180px">Cambiar por<select id="sw-sel">${ORDER.filter(k=>!w.stations.includes(k)).map(k=>`<option value="${k}">${ST[k].n}</option>`).join('')}</select></label>
+      <button class="sm pri" data-act="swapok" data-k="${g.k}" ${w.stations.length>=8?'disabled':''}>Cambiar</button><button class="sm" data-act="swapdel" data-k="${g.k}" ${w.stations.length<=1?'disabled':''}>Quitar</button><button class="sm ghost" data-act="swapx">Cancelar</button></div>`:''}</div>
+    <div>${isSt&&g.r===0&&!sw?`<button class="sm" data-act="swap" data-k="${g.k}">Cambiar</button>`:''}</div></li>`}).join('')}</ol>
+  ${w.stations.length<8?`<div class="row"><button class="sm ghost" data-act="addst">+ Añadir estación</button></div>`:''}
+  ${!w.run?'<p class="small muted">Sin carrera: descansa 60 s entre estaciones.</p>':''}
+  <p class="small muted">Calienta 10 min antes y termina con 5–10 min suaves. Sin trineo: empuja un disco en el suelo o haz sentadilla búlgara pesada. Calorías estimadas con tu peso, altura, edad y sexo.</p>
+ </div></div>`;
+ const rd=()=>{OPT={focus:$('#o-focus').value,run:$('#o-run').value==='1',rounds:+$('#o-rounds').value,count:+$('#o-count').value===defN?null:+$('#o-count').value};$('#o-nv').textContent=$('#o-count').value};
+ ['o-focus','o-run','o-rounds','o-count'].forEach(id=>$('#'+id).addEventListener('input',rd))}
+
+/* ---- Cronómetro ---- */
+const C={running:false,t0:0,laps:[],raf:0,acc:0,wid:null};
+const cNow=()=>C.running?performance.now()-C.t0:C.acc;
+function vCrono(){const w=cur();if(!w){location.hash='#entreno';return}if(C.wid!==w.id){C.running=false;C.acc=0;C.laps=[];C.wid=w.id}
+ app.innerHTML=`<div class="sec">${demoBanner()}<div class="card"><h2>Cronómetro</h2>
+ <p class="small muted">Pulsa <b>Siguiente</b> al terminar cada tramo. Al acabar, los tiempos pasan a Anotar para revisarlos y guardarlos. Mantén la pantalla encendida.</p>
+ <div class="seg-now" id="cseg"></div><div class="clock" id="cclock">0:00</div><div class="seg-now"><small id="clap"></small></div>
+ <div class="row" style="justify-content:center;margin:12px 0" id="cbtns"></div><div class="laps" id="claps"></div></div></div>`;cDraw();cTick()}
+function cDraw(){const segs=cur().segs;const i=C.laps.length;const fin=i>=segs.length;const g=segs[i];
+ $('#cseg').innerHTML=fin?'Entreno terminado<small>Revisa y guarda tus tiempos</small>':`${ST[g.k].n} · ${amtTxt(g.k,g.amount)}<small>${g.load?g.load+' · ':''}tramo ${i+1} de ${segs.length}</small>`;
+ $('#cbtns').innerHTML=fin?`<button class="pri big" data-act="cfin">Revisar y guardar</button><button data-act="creset">Reiniciar</button>`:!C.running&&!C.acc?`<button class="pri big" data-act="cstart">Empezar</button>`
+  :`<button class="pri big" data-act="cnext">Siguiente</button><button data-act="cpause">${C.running?'Pausa':'Seguir'}</button><button data-act="cundo" ${i?'':'disabled'}>Deshacer</button><button class="ghost" data-act="creset">Reiniciar</button>`;
+ let prev=0;$('#claps').innerHTML=segs.map((s,j)=>{const t=C.laps[j];const v=t!=null?t-prev:null;if(t!=null)prev=t;return `<div class="lap ${j===i?'cur':''}"><span>${ST[s.k].n}</span><b>${v!=null?fmt(v/1000):'—'}</b></div>`}).join('')}
+function cTick(){cancelAnimationFrame(C.raf);const el=$('#cclock');if(!el)return;const now=cNow();el.textContent=fmt(Math.floor(now/1000));
+ const last=C.laps.length?C.laps[C.laps.length-1]:0;const lp=$('#clap');if(lp)lp.textContent=C.laps.length<cur().segs.length&&(C.running||C.acc)?'Tramo actual '+fmt(Math.floor((now-last)/1000)):'';if(C.running)C.raf=requestAnimationFrame(cTick)}
+
+/* ---- Anotar ---- */
+function formFromWorkout(w,times){return {id:null,date:todayStr(),title:`${w.count} estaciones · ${FOCUS[w.focus]}`,focus:w.focus,level:w.level,
+ segs:w.segs.map((g,i)=>({k:g.k,amount:g.amount,load:g.load||null,r:g.r,time:times?times[i]:null})),rpe:7,notes:'',partners:[]}}
+function vRegistrar(){if(!S.form){const w=cur();if(!w){location.hash='#entreno';return}S.form=formFromWorkout(w)}const F=S.form;
+ app.innerHTML=`<div class="sec">${demoBanner()}<form class="card" id="lf"><h2>${F.id?'Editar entreno':'Anotar tiempos'}</h2>
+  <div class="grid3"><label>Fecha<input id="l-date" type="date" value="${esc(F.date)}"></label><label>Título<input id="l-title" value="${esc(F.title)}"></label>
+   <label>Esfuerzo percibido (RPE): <b id="rpe-v">${F.rpe}</b><input id="l-rpe" type="range" min="1" max="10" value="${F.rpe}"></label></div>
+  <p class="small muted">Formato m:ss (por ejemplo 3:45). Puedes cambiar la distancia o las reps si hiciste otra cantidad. Deja vacío lo que no hiciste.</p>
+  <div class="splits">${F.segs.map((g,i)=>`<div class="split ${g.k==='run'?'run':''}"><span>${ST[g.k].n}${g.load?' · '+g.load:''}</span>
+   <div class="row" style="gap:6px;flex-wrap:nowrap"><input data-amt="${i}" type="number" min="1" value="${g.amount}" aria-label="Cantidad ${ST[g.k].n}" style="width:76px;padding:6px"><span class="small muted">${ST[g.k].u}</span></div>
+   <input class="t" data-time="${i}" value="${g.time?fmt(g.time):''}" placeholder="m:ss" aria-label="Tiempo ${ST[g.k].n}"></div>`).join('')}</div>
+  <div class="small muted" id="sum"></div>
+  <div class="card" style="background:var(--surface2);border:0"><h3>Entreno compartido</h3>
+   <p class="small muted">Si entrenaste con alguien que tiene cuenta, añádelo por su email. Le aparecerá el entreno con estos tiempos en su historial, con sus propias calorías.</p>
+   <div class="row" id="pt-list">${F.partners.map(x=>`<span class="pill acc">${esc(x.name)} <button type="button" class="x" style="height:auto;color:inherit" data-act="ptdel" data-id="${x.id}" aria-label="Quitar a ${esc(x.name)}">×</button></span>`).join('')||'<span class="small muted">Sin compañeros.</span>'}</div>
+   <div class="row"><input id="pt-email" type="email" placeholder="email@compañero.com" style="max-width:280px" aria-label="Email del compañero"><button type="button" class="sm" data-act="ptadd">Añadir</button><span class="small" id="pt-msg"></span></div></div>
+  <label>Notas<textarea id="l-notes" placeholder="Cómo te sentiste, qué te costó, qué cambiar">${esc(F.notes)}</textarea></label>
+  <div class="row"><button class="pri" type="submit">${F.id?'Guardar cambios':'Guardar entreno'}</button>${F.id?`<button type="button" class="ghost" data-act="cancelform">Cancelar</button>`:''}<span class="small" id="lf-msg"></span></div>
+ </form></div>`;
+ const sum=()=>{const segs=readSegs();const t=segs.filter(g=>g.time);$('#sum').textContent=t.length?`${t.length} de ${segs.length} tramos · total ${fmt(t.reduce((a,b)=>a+b.time,0))} · ~${kcal(workoutKcal(segs,P()))} kcal`:''};
+ $('#lf').addEventListener('input',e=>{if(e.target.id==='l-rpe')$('#rpe-v').textContent=e.target.value;if(e.target.dataset.time!=null||e.target.dataset.amt!=null)sum()});sum();
+ $('#lf').addEventListener('submit',async e=>{e.preventDefault();const segs=readSegs();const msg=$('#lf-msg');if(!segs.some(g=>g.time)){msg.textContent='Anota al menos un tiempo.';return}
+  keepForm();const btn=e.submitter;if(btn)btn.disabled=true;msg.textContent='Guardando…';
+  const ok=await saveWorkout({...F,segs},F.partners);if(btn)btn.disabled=false;if(!ok){msg.textContent='No se pudo guardar. Revisa la conexión.';return}
+  const wasNew=!F.id;S.form=null;if(wasNew)await setCur(generate(P(),OPT));location.hash='#progreso';route()})}
+function readSegs(){return S.form.segs.map((g,i)=>({...g,amount:+$(`[data-amt="${i}"]`).value||g.amount,time:parseT($(`[data-time="${i}"]`).value)}))}
+function keepForm(){const F=S.form;if(!F||!$('#lf'))return;F.segs=readSegs();F.date=$('#l-date').value||todayStr();F.title=$('#l-title').value.trim()||'Entreno';F.rpe=+$('#l-rpe').value;F.notes=$('#l-notes').value.trim()}
+
+/* ---- Progreso ---- */
+function vProgreso(){const A=analysis();const p=A.p;const has=A.ss.length>0;const lvN=LEVELS[A.L].n;
+ app.innerHTML=`<div class="sec">${demoBanner()}
+ <div class="row"><h1>Progreso${p.name?' de '+esc(p.name):''}</h1><div class="row" style="margin-left:auto"><button class="sm pri" data-act="mail" ${has?'':'disabled'}>Enviar a mi email</button><button class="sm" data-act="copyrep" ${has?'':'disabled'}>Copiar informe</button>${!S.demo?'<button class="sm ghost" data-act="demo">Ver ejemplo</button>':''}</div></div>
+ <div class="small" id="mail-msg"></div>
+ ${!has?`<div class="card"><h3>Aún no hay entrenos</h3><p class="muted">Haz tu primer entreno y anota los tiempos. Con uno ya ves dónde estás frente a tu nivel; con varios, tu evolución.</p><div class="row"><button class="pri" data-act="go" data-h="entreno">Ir al entreno</button></div></div>`:''}
+ <div class="tiles">
+  <div class="tile"><div class="l">Índice de rendimiento</div><div class="v">${A.nowIdx!=null?Math.round(A.nowIdx):'—'}</div><div class="l">100 = referencia ${lvN} · media 3 últimos</div></div>
+  <div class="tile"><div class="l">Cambio desde el inicio</div><div class="v">${A.pts.length>=2?((A.nowIdx>=A.startIdx?'+':'')+Math.round((A.nowIdx/A.startIdx-1)*100)+' %'):'—'}</div><div class="l">frente a tus 3 primeros entrenos</div></div>
+  <div class="tile"><div class="l">Kcal esta semana</div><div class="v">${kcal(A.kWeek)}</div><div class="l">${kcal(A.k28)} en 28 días · ${A.kAvg?kcal(A.kAvg)+' por entreno':'—'}</div></div>
+  <div class="tile"><div class="l">Entrenos últimos 28 días</div><div class="v">${A.recent.length}</div><div class="l">${(A.recent.length/4).toFixed(1)} por semana · objetivo ${p.per_week||3}</div></div>
+ </div>
+ ${has?`
+ <div class="card"><h2>Cómo mejorar</h2><div class="recs">${recs(A).map(r=>`<div class="rec"><div><h3>${r.h}</h3>${r.ps.map(x=>`<p>${x}</p>`).join('')}${r.btn||''}</div></div>`).join('')}</div></div>
+ ${A.pts.length?`<div class="card"><h2>Evolución del índice</h2>${lineChart(A.pts)}</div>`:''}
+ <div class="card"><h2>Calorías por semana</h2>${kcalChart(A)}</div>
+ <div class="card"><h2>Estación por estación</h2>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Por debajo de tu nivel</span><span><i style="background:var(--good)"></i>En tu nivel o por encima</span><span><i style="background:var(--ink);width:3px"></i>100 = referencia ${lvN}</span></div>
+  <div class="cmp">${cmpRows(A)}</div>
+  <div class="tblwrap"><table class="w" style="margin-top:12px"><tr><th>Estación</th><th>Veces</th><th>Primer ritmo</th><th>Último</th><th>Mejor</th><th>Cambio</th></tr>${tableRows(A)}</table></div></div>
+ ${A.fade?`<div class="card"><h2>Ritmo de carrera en el último entreno</h2>${runChart(A)}</div>`:''}`:''}
+ <div class="card"><h2>Historial</h2>${histList()}</div></div>`}
+function recs(A){const out=[];const st=A.stats;const ms=ORDER.filter(k=>st[k].idx!=null).sort((a,b)=>st[a].idx-st[b].idx);
+ ms.filter(k=>st[k].idx<100).slice(0,3).forEach(k=>{const x=st[k];const t=TIPS[k];const ch=x.pts.length>1?(x.pts[0].rate-x.pts[x.pts.length-1].rate)/x.pts[0].rate:null;
+  out.push({h:`${ST[k].n}: índice ${Math.round(x.idx)}`,ps:[`Estás un ${Math.round(100-x.idx)} % por debajo de la referencia de tu nivel. Último ritmo ${fmt(x.pts[x.pts.length-1].rate)}${ST[k].pl}.${ch!=null?` Desde tu primer registro ${ch>=0?'has mejorado un '+Math.round(ch*100)+' %':'has empeorado un '+Math.round(-ch*100)+' %'}.`:''}`,`<b>Técnica:</b> ${t.how}`,`<b>Añade:</b> ${t.work}`]})});
+ if(st.run.idx!=null&&st.run.idx<95)out.push({h:`Carrera: índice ${Math.round(st.run.idx)}`,ps:['<b>Añade:</b> un rodaje suave de 40–60 min y una sesión de series (6 × 800 m) a la semana, aparte de estos entrenos.']});
+ if(A.fade&&A.fade.pct>0.08)out.push({h:`Tu carrera cae un ${Math.round(A.fade.pct*100)} % al final`,ps:['La fatiga de las estaciones se nota en los últimos tramos.',`<b>Añade:</b> ${TIPS.run.work}`]});
+ const stale=ORDER.filter(k=>!st[k].last||ago(st[k].last)>14);if(stale.length&&stale.length<8)out.push({h:'Estaciones olvidadas',ps:[`${stale.map(k=>ST[k].n).join(', ')}: más de dos semanas sin hacerlas. El enfoque Equilibrado las meterá en tus próximos entrenos.`]});
+ const pw=A.p.per_week||3;if(A.recent.length/4<pw*0.7)out.push({h:'La constancia es tu mayor margen',ps:[`Haces ${(A.recent.length/4).toFixed(1)} entrenos por semana y tu objetivo es ${pw}. Mejor sesiones más cortas que saltártelas.`]});
+ if(A.rpeAvg&&A.rpeAvg>=8.5)out.push({h:'Mucha fatiga acumulada',ps:[`Tu RPE medio de las dos últimas semanas es ${A.rpeAvg.toFixed(1)}. Mete un día de descanso extra o un entreno sin carrera.`]});
+ const strong=ms.filter(k=>st[k].idx>=105);if(strong.length)out.push({h:'Tus puntos fuertes',ps:[`${strong.map(k=>ST[k].n).join(', ')}: por encima de tu nivel.`]});
+ if(A.pts.length>=3&&A.nowIdx>=108&&A.L<3)out.push({h:`Estás listo para subir a ${LEVELS[A.L+1].n}`,ps:[`Tus 3 últimos entrenos están de media un ${Math.round(A.nowIdx-100)} % por encima de tu nivel.`],btn:`<button class="sm pri" data-act="lvup">Subir a ${LEVELS[A.L+1].n}</button>`});
+ else if(A.pts.length>=3&&A.nowIdx<=85&&A.L>0)out.push({h:`Plantéate bajar a ${LEVELS[A.L-1].n}`,ps:['Tus últimos entrenos están bastante por debajo de la referencia.'],btn:`<button class="sm" data-act="lvdown">Bajar a ${LEVELS[A.L-1].n}</button>`});
+ if(!out.length)out.push({h:'Todo en su sitio',ps:['Estás en tu nivel o por encima en todo. Prueba a añadir una ronda.']});return out}
+function cmpRows(A){return [...ORDER,'run'].map(k=>{const v=A.stats[k].idx;const max=Math.max(130,v||0);const pc=y=>(y/max*100).toFixed(1)+'%';
+ return `<div class="r"><div class="small"><b>${ST[k].n}</b></div><div class="bar" role="img" aria-label="${ST[k].n}: índice ${v?Math.round(v):'sin dato'}">${v!=null?`<div class="f ${v>=100?'ok':''}" style="width:${pc(v)}"></div>`:''}<div class="m" style="left:${pc(100)}"></div></div><div class="num" style="text-align:right">${v!=null?Math.round(v):'<span class="muted small">—</span>'}</div></div>`}).join('')}
+function tableRows(A){return [...ORDER,'run'].map(k=>{const x=A.stats[k];if(!x.pts.length)return `<tr><td>${ST[k].n}</td><td>0</td><td colspan="4" class="muted">sin registros</td></tr>`;
+ const f=x.pts[0].rate,l=x.pts[x.pts.length-1].rate,b=Math.min(...x.pts.map(p=>p.rate));const ch=(f-l)/f*100;
+ return `<tr><td>${ST[k].n}</td><td>${x.pts.length}</td><td class="num">${fmt(f)}${ST[k].pl}</td><td class="num">${fmt(l)}${ST[k].pl}</td><td class="num">${fmt(b)}</td><td>${x.pts.length>1?`<span class="pill ${ch>=0?'ok':'bad'}">${ch>=0?'−':'+'}${Math.abs(ch).toFixed(0)} % tiempo</span>`:'—'}</td></tr>`}).join('')}
+function lineChart(pts){const W=720,H=240,pl=44,pr=20,pt=16,pb=34;const ys=pts.map(p=>p.idx).concat(100);let y0=Math.min(...ys)-6,y1=Math.max(...ys)+6;
+ const X=i=>pts.length===1?(pl+W-pr)/2:pl+i/(pts.length-1)*(W-pl-pr),Y=v=>pt+(y1-v)/(y1-y0)*(H-pt-pb);
+ const step=[5,10,20].find(s=>(y1-y0)/s<=6)||25;let g='';for(let v=Math.ceil(y0/step)*step;v<=y1;v+=step)g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-8}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;
+ const path=pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p.idx).toFixed(1)).join(' ');const area=pts.length>1?`<path d="${path} L${X(pts.length-1)} ${H-pb} L${X(0)} ${H-pb} Z" fill="var(--accent)" opacity=".10"/>`:'';
+ const dots=pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.idx)}" r="${i===pts.length-1?6:4}" fill="${i===pts.length-1?'var(--accent)':'var(--surface)'}" stroke="var(--accent)" stroke-width="2"><title>${dFmt(p.date)}: ${Math.round(p.idx)}</title></circle>`).join('');
+ const every=Math.ceil(pts.length/8);const xl=pts.map((p,i)=>(i%every===0||i===pts.length-1)?`<text x="${X(i)}" y="${H-10}" text-anchor="middle">${dFmt(p.date)}</text>`:'').join('');const last=pts[pts.length-1];
+ return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Índice de rendimiento por entreno">${g}<line x1="${pl}" x2="${W-pr}" y1="${Y(100)}" y2="${Y(100)}" stroke="var(--teal)" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${W-pr}" y="${Y(100)-6}" text-anchor="end" style="fill:var(--teal)">Referencia de tu nivel</text>${area}<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>${dots}${xl}<text x="${X(pts.length-1)}" y="${Y(last.idx)-12}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${Math.round(last.idx)}</text></svg></div><p class="small muted">Cada punto es un entreno. Más alto es mejor.</p>`}
+function kcalChart(A){const W=720,H=200,pl=50,pr=16,pt=18,pb=30;const v=A.weeks.map(w=>w.kcal);const max=Math.max(100,...v)*1.15;const bw=(W-pl-pr)/8;const Y=x=>H-pb-x/max*(H-pt-pb);
+ let g='';const step=[100,200,250,500,1000,2000].find(s=>max/s<=5)||5000;for(let t=0;t<=max;t+=step)g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end">${kcal(t)}</text>`;
+ const bars=A.weeks.map((w,i)=>{const lab=dParse(w.start).toLocaleDateString('es-ES',{day:'numeric',month:'short'});return `${w.kcal?`<rect x="${pl+bw*i+bw*.2}" y="${Y(w.kcal)}" width="${bw*.6}" height="${H-pb-Y(w.kcal)}" rx="3" fill="${i===7?'var(--accent)':'var(--teal)'}"><title>Semana del ${lab}: ${kcal(w.kcal)} kcal en ${w.n} entrenos</title></rect><text x="${pl+bw*i+bw/2}" y="${Y(w.kcal)-5}" text-anchor="middle" style="fill:var(--ink)">${kcal(w.kcal)}</text>`:''}<text x="${pl+bw*i+bw/2}" y="${H-10}" text-anchor="middle">${i===7?'Esta':lab}</text>`}).join('');
+ return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Calorías de entreno por semana">${g}${bars}</svg></div><p class="small muted">Solo el gasto de los entrenos registrados, estimado con MET y tu metabolismo basal. Es una aproximación: un pulsómetro da una cifra más fiel.</p>`}
+function runChart(A){const r=A.fade.runs;const W=720,H=190,pl=50,pr=16,pt=14,pb=30;let y0=Math.min(...r)-15,y1=Math.max(...r)+15;const bw=(W-pl-pr)/r.length;const Y=x=>H-pb-(x-y0)/(y1-y0)*(H-pt-pb);
+ let g='';const step=[10,15,30,60].find(s=>(y1-y0)/s<=5)||60;for(let t=Math.ceil(y0/step)*step;t<=y1;t+=step)g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end">${fmt(t)}</text>`;
+ const bars=r.map((x,i)=>`<rect x="${pl+bw*i+bw*.2}" y="${Y(x)}" width="${bw*.6}" height="${H-pb-Y(x)}" rx="3" fill="var(--teal)"/><text x="${pl+bw*i+bw/2}" y="${Y(x)-5}" text-anchor="middle" style="fill:var(--ink)">${fmt(x)}</text><text x="${pl+bw*i+bw/2}" y="${H-10}" text-anchor="middle">Tramo ${i+1}</text>`).join('');
+ return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Ritmo por tramo de carrera">${g}${bars}</svg></div><p class="small muted">${dFmt(A.fade.date)} · ritmo por km en cada tramo; barra más baja es más rápido. Diferencia entre la primera y la segunda mitad: ${A.fade.pct>=0?'+':''}${Math.round(A.fade.pct*100)} %.</p>`}
+function histList(){const a=[...SESS()].sort((x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0));if(!a.length)return '<p class="muted">Todavía no has registrado nada.</p>';
+ return `<div class="hist">${a.map(s=>{const g=(s.segs||[]).filter(x=>x.time);const tot=g.reduce((u,x)=>u+x.time,0);
+  return `<div class="hrow"><div class="small muted">${dFmt(s.date)}</div><div><b>${esc(s.title)}</b>${s.partners?.length?` <span class="pill">con ${s.partners.map(x=>esc(x.name)).join(', ')}</span>`:''}${!s.mine?` <span class="pill">registrado por ${esc(s.ownerName)}</span>`:''}
+   <div class="small muted"><span class="tt" style="color:var(--ink)">${fmt(tot)}</span> · ${kcal(s.calories)} kcal · ${[...new Set(g.filter(x=>x.k!=='run').map(x=>ST[x.k].n))].join(', ')}${s.rpe?' · RPE '+s.rpe:''}${s.notes?' · '+esc(s.notes.slice(0,70)):''}</div></div>
+   <div class="row act" id="act-${s.id}">${s.mine?`<button class="sm" data-act="edit" data-id="${s.id}">Editar</button><button class="sm ghost" data-act="del" data-id="${s.id}">Borrar</button>`:`<button class="sm ghost" data-act="del" data-id="${s.id}">Quitarme</button>`}</div></div>`}).join('')}</div>`}
+function reportText(){const A=analysis();const L=[`Informe de entreno Hyrox${A.p.name?' · '+A.p.name:''} · ${dFmt(todayStr())}`,`Nivel ${LEVELS[A.L].n} · ${A.ss.length} entrenos · ${A.recent.length} en 28 días`,`Índice actual: ${A.nowIdx!=null?Math.round(A.nowIdx):'—'} (100 = referencia del nivel)`,`Calorías: ${kcal(A.kWeek)} esta semana · ${kcal(A.k28)} en 28 días`,'','Por estación (índice · último ritmo):'];
+ [...ORDER,'run'].forEach(k=>{const x=A.stats[k];L.push(`- ${ST[k].n}: ${x.idx!=null?Math.round(x.idx)+' · '+fmt(x.pts[x.pts.length-1].rate)+ST[k].pl:'sin datos'}`)});
+ L.push('','Prioridades:');recs(A).forEach((r,i)=>L.push(`${i+1}. ${r.h}`));return L.join('\n')}
+function reportHtml(){const A=analysis();const row=(a,b)=>`<tr><td style="padding:6px 10px;border-bottom:1px solid #e3e5e1">${a}</td><td style="padding:6px 10px;border-bottom:1px solid #e3e5e1;text-align:right"><b>${b}</b></td></tr>`;
+ return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#16191e"><h1 style="font-size:24px;margin:0 0 4px">Tu progreso en Entreno Hyrox</h1><p style="color:#5b636d;margin:0 0 16px">${esc(A.p.name||'')} · ${dFmt(todayStr())} · nivel ${LEVELS[A.L].n}</p>
+ <table style="border-collapse:collapse;width:100%">${row('Índice de rendimiento (100 = tu nivel)',A.nowIdx!=null?Math.round(A.nowIdx):'—')}${row('Cambio desde el inicio',A.pts.length>=2?Math.round((A.nowIdx/A.startIdx-1)*100)+' %':'—')}${row('Entrenos en 28 días',A.recent.length)}${row('Kcal esta semana',kcal(A.kWeek))}${row('Kcal en 28 días',kcal(A.k28))}</table>
+ <h2 style="font-size:18px;margin:20px 0 8px">Por estación</h2><table style="border-collapse:collapse;width:100%">${[...ORDER,'run'].map(k=>{const x=A.stats[k];return row(ST[k].n,x.idx!=null?`${Math.round(x.idx)} · ${fmt(x.pts[x.pts.length-1].rate)}${ST[k].pl}`:'sin datos')}).join('')}</table>
+ <h2 style="font-size:18px;margin:20px 0 8px">Cómo mejorar</h2>${recs(A).map((r,i)=>`<p style="margin:0 0 4px"><b>${i+1}. ${r.h}</b></p>${r.ps.map(p=>`<p style="margin:0 0 4px;color:#3b4148">${p}</p>`).join('')}`).join('<div style="height:8px"></div>')}
+ <p style="color:#5b636d;font-size:12px;margin-top:20px">Tiempos de referencia y calorías son estimaciones orientativas.</p></div>`}
+
+/* ================= Ejemplo ================= */
+function demoData(){const p={id:'demo',email:'ejemplo@correo.com',name:'Ejemplo',sex:'M',birthdate:'1992-05-10',height_cm:178,weight_kg:76,scale:'open',five_k_sec:1440,strength:'1',hyrox_exp:'1',per_week:3,level_manual:null};
+ const L=lvlIdx(level(p));const lv=LEVELS[L].k;const skill={ski:1.02,push:0.82,pull:0.88,bbj:0.97,row:1.04,farmers:1.0,lunges:0.9,wb:0.8,run:0.96};const sessions=[];
+ const sets=[['ski','push','bbj','lunges','wb'],['pull','row','farmers','lunges','wb'],['ski','push','pull','row','wb'],['bbj','farmers','lunges','wb','push']];
+ for(let i=0;i<14;i++){const prog=1+i*0.012;const segs=[];sets[i%4].forEach(k=>{[['run',ST.run.amt[L]],[k,ST[k].amt[L]]].forEach(([kk,a])=>{const fade=kk==='run'?1+segs.length*0.006:1;segs.push({k:kk,amount:a,time:Math.round(refTime(kk,a,lv,p)/(skill[kk]*prog)*fade*(0.97+Math.random()*0.06))})})});
+  sessions.push({id:'d'+i,created:i,owner_id:'demo',mine:i%5!==3,ownerName:'Laura',date:daysAgoStr(48-i*3.5|0),title:`5 estaciones · ${['Equilibrado','Fuerza','Motor','Equilibrado'][i%4]}`,level:lv,segs,rpe:[7,8,8,6][i%4],notes:'',partners:i%5===3?[]:i%3===0?[{id:'x',name:'Laura'}]:[],calories:Math.round(workoutKcal(segs,p))})}
+ const d={profile:p,sessions,current:null};S.demo=d;d.current=generate(p,{focus:'debiles',run:true,rounds:1});return d}
+
+/* ================= Eventos ================= */
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;if(b.tagName==='A')e.preventDefault();
+ const w=cur();
+ switch(a){
+ case 'am':vAuth(b.dataset.m);break;
+ case 'logout':await S.sb.auth.signOut();break;
+ case 'gen':S.swap=null;await setCur(generate(P(),OPT));vEntreno();break;
+ case 'swap':S.swap=b.dataset.k;vEntreno();break;
+ case 'swapx':S.swap=null;vEntreno();break;
+ case 'swapok':{const to=$('#sw-sel').value;S.swap=null;await setCur(swapStation(w,b.dataset.k,to,P()));vEntreno();break}
+ case 'swapdel':S.swap=null;await setCur(swapStation(w,b.dataset.k,null,P()));vEntreno();break;
+ case 'addst':{const k=ORDER.find(k=>!w.stations.includes(k));w.stations=ORDER.filter(x=>w.stations.includes(x)||x===k);w.segs=buildSegs(w.stations,P(),lvlIdx(w.level),w.run,w.rounds);finishW(w,P());S.swap=k;await setCur(w);vEntreno();break}
+ case 'startw':location.hash='#crono';break;
+ case 'manual':S.form=formFromWorkout(w);location.hash='#registrar';break;
+ case 'cancelform':S.form=null;location.hash='#progreso';break;
+ case 'edit':{const s=SESS().find(x=>x.id===b.dataset.id);S.form={id:s.id,date:s.date,title:s.title,focus:s.focus,level:s.level,segs:JSON.parse(JSON.stringify(s.segs||[])),rpe:s.rpe||7,notes:s.notes||'',partners:(s.partners||[]).map(x=>({...x}))};if(location.hash==='#registrar')route();else location.hash='#registrar';break}
+ case 'del':{const s=SESS().find(x=>x.id===b.dataset.id);$('#act-'+b.dataset.id).innerHTML=`<span class="small">${s.mine?(s.partners?.length?'Se borrará también para tus compañeros. ':'')+'¿Borrar?':'¿Quitarte de este entreno?'}</span><button class="sm pri" data-act="delok" data-id="${b.dataset.id}">Sí</button><button class="sm ghost" data-act="go" data-h="progreso">No</button>`;break}
+ case 'delok':await deleteWorkout(b.dataset.id);vProgreso();break;
+ case 'ptadd':{const m=$('#pt-msg');const em=$('#pt-email').value.trim();if(!em){m.textContent='Escribe su email.';break}
+  keepForm();if(S.demo){S.form.partners.push({id:'demo-'+Date.now(),name:em.split('@')[0]});vRegistrar();break}
+  if(em.toLowerCase()===S.user.email.toLowerCase()){m.textContent='Ese eres tú.';break}m.textContent='Buscando…';
+  const r=await S.sb.rpc('find_partner',{p_email:em});if(r.error){m.textContent='Error: '+r.error.message;break}
+  if(!r.data.length){m.textContent='No hay ninguna cuenta con ese email. Pídele que se registre primero.';break}
+  const x=r.data[0];if(!S.form.partners.some(y=>y.id===x.id))S.form.partners.push({id:x.id,name:x.name||em});vRegistrar();break}
+ case 'ptdel':keepForm();S.form.partners=S.form.partners.filter(x=>x.id!==b.dataset.id);vRegistrar();break;
+ case 'go':if(location.hash==='#'+b.dataset.h)route();else location.hash='#'+b.dataset.h;break;
+ case 'demo':demoData();S.form=null;location.hash='#progreso';route();if(!S.user)$('#nav').hidden=false;break;
+ case 'exitdemo':S.demo=null;S.form=null;if(S.user)route();else{$('#nav').hidden=true;vAuth('login')}break;
+ case 'lvup':case 'lvdown':{const L=clamp(lvlIdx(level(P()))+(a==='lvup'?1:-1),0,3);await saveProfileFields({level_manual:LEVELS[L].k});OPT.count=null;await setCur(generate(P(),OPT));vProgreso();break}
+ case 'copyrep':navigator.clipboard.writeText(reportText()).then(()=>b.textContent='Copiado',()=>b.textContent='No se pudo copiar').finally(()=>setTimeout(()=>b.textContent='Copiar informe',1800));break;
+ case 'mail':{const m=$('#mail-msg');if(S.demo){m.textContent='En el modo ejemplo no se envían emails.';break}b.disabled=true;m.style.color='var(--muted)';m.textContent='Enviando…';
+  const r=await S.sb.functions.invoke('send-report',{body:{subject:'Tu progreso en Entreno Hyrox · '+dFmt(todayStr()),html:reportHtml(),text:reportText()}});b.disabled=false;
+  if(!r.error&&r.data?.ok){m.style.color='var(--good)';m.textContent='Enviado a '+r.data.to+'. Mira también en spam.'}
+  else{const mt=`mailto:${encodeURIComponent(S.user.email)}?subject=${encodeURIComponent('Mi progreso en Entreno Hyrox')}&body=${encodeURIComponent(reportText())}`;
+   m.style.color='var(--bad)';m.innerHTML=`No se pudo enviar automáticamente (el envío de emails no está configurado o falló). <a href="${mt}">Abrirlo en tu app de correo</a>.`}break}
+ case 'cstart':C.running=true;C.t0=performance.now();C.acc=0;C.laps=[];cDraw();cTick();break;
+ case 'cnext':if(!C.running){C.running=true;C.t0=performance.now()-C.acc}C.laps.push(cNow());if(C.laps.length>=w.segs.length){C.acc=cNow();C.running=false}cDraw();cTick();break;
+ case 'cpause':if(C.running){C.acc=cNow();C.running=false}else{C.running=true;C.t0=performance.now()-C.acc}cDraw();cTick();break;
+ case 'cundo':C.laps.pop();cDraw();break;
+ case 'creset':C.running=false;C.acc=0;C.laps=[];cDraw();cTick();break;
+ case 'cfin':{let prev=0;const t=C.laps.map(x=>{const v=Math.round((x-prev)/1000);prev=x;return v});S.form=formFromWorkout(w,t);C.laps=[];C.acc=0;C.wid=null;location.hash='#registrar';break}
+ }});
+window.addEventListener('hashchange',()=>{if(S.user||S.demo)route()});
+window.addEventListener('beforeunload',e=>{if(C.running||C.laps.length){e.preventDefault();e.returnValue=''}});
+
+/* ================= Arranque ================= */
+async function start(){try{setStatus('Cargando…');S.profile=await loadProfile();await loadSessions();setStatus('');route()}
+ catch(err){console.error(err);app.innerHTML=`<div class="sec"><div class="card"><h2>No se pudieron cargar tus datos</h2><p class="muted">${esc(err.message||err)}</p><p class="small muted">Si acabas de crear la base de datos, revisa que ejecutaste todo schema.sql.</p><button data-act="go" data-h="entreno">Reintentar</button></div></div>`;setStatus('Error al cargar',true)}}
+(function boot(){const c=window.APP_CONFIG||{};
+ if(!window.supabase||!c.SUPABASE_URL||/TU-PROYECTO/.test(c.SUPABASE_URL)||!c.SUPABASE_KEY||/TU_CLAVE/.test(c.SUPABASE_KEY)){vSetup();return}
+ S.sb=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_KEY);let started=null;
+ S.sb.auth.onAuthStateChange((ev,session)=>{
+  if(ev==='PASSWORD_RECOVERY'){S.recovery=true;S.user=session?.user||null;vAuth('newpass');return}
+  const u=session?.user||null;if(S.recovery)return;
+  if(!u){S.user=null;S.profile=null;S.sessions=[];started=null;if(!S.demo)vAuth('login');return}
+  if(started===u.id)return;started=u.id;S.user=u;S.demo=null;setTimeout(start,0)});
+})();
+</script>
+</body>
+</html>
